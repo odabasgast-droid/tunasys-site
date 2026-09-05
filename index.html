@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tunasy.s Mail (Demo)</title>
+  <style>
+    :root{
+      --bg:#000;
+      --card:#121212;
+      --muted:#aaaaaa;
+      --input-bg:#1e1e1e;
+      --border:#222;
+      --accent:#ffffff;
+      --accent-muted:#888;
+      --success:#55ff55;
+      --danger:#ff5555;
+    }
+    html,body{height:100%;margin:0}
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color:var(--bg);
+      color:var(--accent);
+      padding:10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-sizing:border-box;
+      min-height:100vh;
+    }
+    .card{
+      background:var(--card);
+      padding:20px;
+      border-radius:16px;
+      width:100%;
+      max-width:650px;
+      box-sizing:border-box;
+      box-shadow:0 4px 20px rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+      text-align:center;
+    }
+    .logo-container{position:relative;width:60px;height:60px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center}
+    .outer-circle-1{position:absolute;width:60px;height:60px;border:2px solid var(--accent);border-radius:50%}
+    .outer-circle-2{position:absolute;width:46px;height:46px;border:1px solid var(--accent-muted);border-radius:50%}
+    .inner-t{font-size:24px;font-weight:bold;color:var(--accent);z-index:1}
+    h1{color:var(--accent);margin:0 0 6px;font-size:20px}
+    p.lead{color:var(--muted);font-size:13px;margin:0 0 12px}
+    form{margin-top:10px;text-align:left}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+    input,textarea,button{
+      font-size:14px;
+      font-family:inherit;
+    }
+    input, textarea{
+      width:100%;
+      padding:12px;
+      margin:6px 0 12px;
+      background:var(--input-bg);
+      border:1px solid #333;
+      border-radius:8px;
+      box-sizing:border-box;
+      color:var(--accent);
+    }
+    input:focus, textarea:focus{outline:3px solid rgba(255,255,255,0.06); border-color:var(--accent)}
+    .btn{
+      display:inline-block;
+      background-color:var(--accent);
+      color:#000;
+      padding:12px;
+      border:none;
+      border-radius:8px;
+      font-weight:700;
+      cursor:pointer;
+      width:100%;
+      box-sizing:border-box;
+    }
+    .btn[aria-pressed]{width:auto}
+    .btn.secondary{
+      background:transparent;
+      color:var(--accent);
+      border:1px solid #444;
+      margin-top:8px;
+      width:100%;
+    }
+    .btn.secondary:hover{background:#222}
+    .status-text{font-size:12px;margin-top:2px;text-align:left}
+    .muted{color:var(--muted)}
+    .hidden{display:none !important}
+    /* Inbox layout */
+    #inboxApp{display:flex;flex-direction:column;gap:10px;height:75vh;text-align:left}
+    .inbox-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:8px}
+    .email-list{flex:1;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:#181818}
+    .menu-bar{display:flex;gap:8px}
+    .menu-bar .btn, .menu-bar .secondary{width:auto;padding:8px 10px;font-size:13px}
+    /* Small responsive */
+    @media (max-width:520px){
+      .card{padding:14px;border-radius:12px}
+    }
+    /* Focus for keyboard users */
+    button:focus, input:focus, textarea:focus { box-shadow:0 0 0 3px rgba(255,255,255,0.06); }
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+  <!-- AUTH / LOGIN / REGISTER -->
+  <main class="card" id="authScreen" aria-live="polite">
+    <div class="logo-container" aria-hidden="true">
+      <div class="outer-circle-1"></div>
+      <div class="outer-circle-2"></div>
+      <div class="inner-t">T</div>
+    </div>
+
+    <h1>Tunasy.s</h1>
+    <p class="lead">Deine sichere E‑Mail‑App (Demo)</p>
+
+    <div id="registerWrap">
+      <form id="registerForm" autocomplete="off">
+        <div>
+          <label for="regName">Vorname Nachname</label>
+          <input id="regName" name="name" type="text" inputmode="text" placeholder="Vorname Nachname" required>
+        </div>
+
+        <div>
+          <label for="regUsername">Gewünschter Benutzername (ohne @tunasys.de)</label>
+          <input id="regUsername" name="username" type="text" placeholder="gewuenschtername" aria-describedby="usernameStatus" required>
+          <div id="usernameStatus" class="status-text" aria-live="polite"></div>
+        </div>
+
+        <div>
+          <label for="regPassword">Passwort</label>
+          <input id="regPassword" name="password" type="password" placeholder="Passwort" required>
+        </div>
+
+        <div id="registerStatus" class="status-text muted" aria-live="polite"></div>
+
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="btn" type="submit">Konto erstellen</button>
+          <button class="btn secondary" type="button" id="toLoginBtn">Bereits ein Konto? Anmelden</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="loginWrap" class="hidden">
+      <form id="loginForm" autocomplete="off">
+        <div>
+          <label for="logUsername">Benutzername</label>
+          <input id="logUsername" name="username" type="text" placeholder="Dein Benutzername" required>
+        </div>
+
+        <div>
+          <label for="logPassword">Passwort</label>
+          <input id="logPassword" name="password" type="password" placeholder="Passwort" required>
+        </div>
+
+        <div id="loginStatus" class="status-text muted" aria-live="polite"></div>
+
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="btn" type="submit">Anmelden</button>
+          <button class="btn secondary" type="button" id="toRegisterBtn">Zurück zur Registrierung</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- POSTFACH -->
+  <section class="card hidden" id="inboxApp" aria-hidden="true">
+    <div class="inbox-header">
+      <div>
+        <h3 id="userWelcome" style="margin:0;font-size:15px;color:#fff">Posteingang</h3>
+        <div id="userPhoneDisplay" style="font-size:11px;color:#888"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn" id="composeBtn" type="button">+ Schreiben</button>
+        <button class="btn secondary" id="settingsBtn" type="button" aria-haspopup="dialog">⚙ Settings</button>
+        <button class="btn secondary" id="logoutBtn" type="button">Abmelden</button>
+      </div>
+    </div>
+
+    <div class="menu-bar" role="toolbar" aria-label="Inbox menu">
+      <button class="btn" id="refreshBtn" type="button">Aktualisieren</button>
+      <button class="btn secondary" id="clearInboxBtn" type="button">Postfach leeren</button>
+    </div>
+
+    <div class="email-list" id="emailListBox" tabindex="0" aria-live="polite">
+      <p style="color:#666;text-align:center;margin-top:50px">Dein Postfach ist leer.</p>
+    </div>
+  </section>
+
+  <!-- COMPOSE -->
+  <aside class="card hidden" id="composeScreen" role="dialog" aria-modal="true" aria-labelledby="composeTitle">
+    <h3 id="composeTitle">Neue E‑Mail</h3>
+    <form id="composeForm">
+      <div>
+        <label for="mailTo">An (Empfänger)</label>
+        <input id="mailTo" name="to" type="email" placeholder="empfaenger@domain.tld" required>
+      </div>
+      <div>
+        <label for="mailSubject">Betreff</label>
+        <input id="mailSubject" name="subject" type="text" placeholder="Betreff">
+      </div>
+      <div>
+        <label for="mailBody">Nachricht</label>
+        <textarea id="mailBody" name="body" rows="6" placeholder="Nachricht schreiben..."></textarea>
+      </div>
+      <div id="composeStatus" class="status-text muted" aria-live="polite"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button class="btn" type="submit">Absenden</button>
+        <button class="btn secondary" type="button" id="composeCancel">Abbrechen</button>
+      </div>
+    </form>
+  </aside>
+
+  <!-- SETTINGS -->
+  <aside class="card hidden" id="settingsScreen" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h3 id="settingsTitle">Einstellungen</h3>
+    <form id="settingsForm">
+      <div>
+        <label for="settingName">Name ändern</label>
+        <input id="settingName" name="name" type="text" placeholder="Angezeigter Name">
+      </div>
+      <div>
+        <label for="settingPhone">Telefonnummer verknüpfen</label>
+        <input id="settingPhone" name="phone" type="tel" placeholder="+49 176 ...">
+      </div>
+      <div>
+        <label for="settingPassword">Neues Passwort</label>
+        <input id="settingPassword" name="password" type="password" placeholder="Neues Passwort">
+      </div>
+
+      <div id="settingsStatus" class="status-text muted" aria-live="polite"></div>
+
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button class="btn" type="submit">Änderungen speichern</button>
+        <button class="btn secondary" type="button" id="settingsCancel">Zurück zum Postfach</button>
+      </div>
+    </form>
+  </aside>
+
+  <script>
+    // Demo: localStorage-basierte Nutzerverwaltung.
+    // WARNUNG: Frontend-only storage is not secure for real apps. This is for demo/local testing only.
+    const takenUsernames = ["admin","tuna","support","test"]; // basis-liste
+    const LS_USERS_KEY = "tunasys_demo_users_v1";
+    const LS_CURRENT = "tunasys_demo_current";
+
+    // Utilities
+    const $ = id => document.getElementById(id);
+    const show = el => el.classList.remove('hidden');
+    const hide = el => el.classList.add('hidden');
+
+    function debounce(fn, wait=300){
+      let t;
+      return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
+    }
+
+    // Crypto: hash password with SHA-256 (ArrayBuffer -> hex)
+    async function hashPassword(str){
+      const enc = new TextEncoder();
+      const data = enc.encode(str);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      // convert to hex
+      return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+
+    function loadUsers(){
+      try{
+        return JSON.parse(localStorage.getItem(LS_USERS_KEY) || "{}");
+      }catch(e){ return {}; }
+    }
+    function saveUsers(obj){
+      localStorage.setItem(LS_USERS_KEY, JSON.stringify(obj));
+    }
+    function setCurrent(username){
+      localStorage.setItem(LS_CURRENT, username);
+    }
+    function clearCurrent(){
+      localStorage.removeItem(LS_CURRENT);
+    }
+    function getCurrent(){
+      return localStorage.getItem(LS_CURRENT) || "";
+    }
+
+    // UI state toggles
+    const authScreen = $('authScreen'), inboxApp = $('inboxApp'),
+          composeScreen = $('composeScreen'), settingsScreen = $('settingsScreen');
+
+    function enterInbox(username){
+      hide(authScreen);
+      show(inboxApp);
+      inboxApp.removeAttribute('aria-hidden');
+      $('userWelcome').textContent = username + "@tunasys.de";
+      setCurrent(username);
+      renderEmailList(username);
+      // populate settings fields from stored user
+      const users = loadUsers();
+      const u = users[username] || {};
+      $('settingName').value = u.name || "";
+      $('userPhoneDisplay').textContent = u.phone ? "Tel: " + u.phone : "";
+    }
+
+    function logout(){
+      clearCurrent();
+      hide(inboxApp);
+      show(authScreen);
+      inboxApp.setAttribute('aria-hidden','true');
+      // reset login forms
+      $('loginForm').reset();
+    }
+
+    // Render demo email list (empty)
+    function renderEmailList(username){
+      const box = $('emailListBox');
+      box.innerHTML = "";
+      const p = document.createElement('p');
+      p.className = 'muted';
+      p.style.textAlign = 'center';
+      p.style.marginTop = '50px';
+      p.textContent = 'Dein Postfach ist leer.';
+      box.appendChild(p);
+    }
+
+    // Username availability check (debounced)
+    async function checkUsernameAvailability(){
+      const val = $('regUsername').value.trim().toLowerCase();
+      const status = $('usernameStatus');
+      if(!val){ status.textContent=""; return; }
+      // basic validation
+      const ok = /^[a-z0-9._-]{3,24}$/.test(val);
+      if(!ok){
+        status.style.color = 'var(--danger)';
+        status.textContent = '❌ Ungültiger Benutzername (3–24, a-z, 0-9, . _ -)';
+        return;
+      }
+      const users = loadUsers();
+      if(takenUsernames.includes(val) || users[val]){
+        status.style.color = 'var(--danger)';
+        status.textContent = '❌ Bereits besetzt!';
+      }else{
+        status.style.color = 'var(--success)';
+        status.textContent = '✔ Verfügbar: ' + val + '@tunasys.de';
+      }
+    }
+    const debouncedCheck = debounce(checkUsernameAvailability, 350);
+    $('regUsername').addEventListener('input', debouncedCheck);
+
+    // Toggle register/login forms
+    $('toLoginBtn').addEventListener('click', ()=>{ hide($('registerWrap')); show($('loginWrap')); });
+    $('toRegisterBtn').addEventListener('click', ()=>{ show($('registerWrap')); hide($('loginWrap')); });
+
+    // Registration handler
+    $('registerForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const name = $('regName').value.trim();
+      const username = $('regUsername').value.trim().toLowerCase();
+      const pwd = $('regPassword').value;
+      const status = $('registerStatus');
+
+      if(!username || !pwd || !name){ status.textContent='Bitte alle Felder ausfüllen.'; return; }
+
+      const users = loadUsers();
+      if(takenUsernames.includes(username) || users[username]){
+        status.style.color='var(--danger)';
+        status.textContent='Benutzername bereits vorhanden.';
+        return;
+      }
+
+      // Hash password before storing (DEMO). In real apps send to server via TLS and store securely server-side.
+      status.textContent = 'Erzeuge Benutzer...';
+      try{
+        const hashed = await hashPassword(pwd);
+        users[username] = { name, username, pwdHash: hashed, phone: '' };
+        saveUsers(users);
+        status.style.color='var(--success)';
+        status.textContent = 'Konto erstellt — du wirst eingeloggt.';
+        // small delay to show message
+        setTimeout(()=>enterInbox(username), 600);
+      }catch(err){
+        status.style.color='var(--danger)';
+        status.textContent = 'Fehler beim Erstellen des Kontos.';
+      }
+    });
+
+    // Login handler
+    $('loginForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const username = $('logUsername').value.trim().toLowerCase();
+      const pwd = $('logPassword').value;
+      const status = $('loginStatus');
+      if(!username || !pwd){ status.textContent='Bitte Felder ausfüllen.'; return; }
+      const users = loadUsers();
+      const u = users[username];
+      if(!u){ status.style.color='var(--danger)'; status.textContent='Benutzer nicht gefunden.'; return; }
+      const hashed = await hashPassword(pwd);
+      if(hashed !== u.pwdHash){
+        status.style.color='var(--danger)';
+        status.textContent='Falsches Passwort.';
+        return;
+      }
+      status.style.color='var(--success)';
+      status.textContent='Erfolgreich angemeldet.';
+      setTimeout(()=>enterInbox(username), 300);
+    });
+
+    // Compose open/close
+    $('composeBtn').addEventListener('click', ()=>{
+      show(composeScreen); hide(inboxApp);
+      composeScreen.focus?.();
+    });
+    $('composeCancel').addEventListener('click', ()=>{
+      hide(composeScreen);
+      show(inboxApp);
+    });
+    $('composeForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const to = $('mailTo').value.trim();
+      const subj = $('mailSubject').value.trim();
+      const body = $('mailBody').value.trim();
+      const status = $('composeStatus');
+      if(!to){ status.style.color='var(--danger)'; status.textContent='Bitte Empfänger angeben.'; return; }
+      // Demo: simulate send
+      status.style.color='var(--success)';
+      status.textContent = 'E‑Mail gesendet an ' + to;
+      // Reset and return
+      setTimeout(()=>{
+        $('composeForm').reset();
+        status.textContent='';
+        hide(composeScreen); show(inboxApp);
+      },700);
+    });
+
+    // Settings open/close & save
+    $('settingsBtn').addEventListener('click', ()=>{
+      show(settingsScreen); hide(inboxApp);
+      settingsScreen.focus?.();
+    });
+    $('settingsCancel').addEventListener('click', ()=>{
+      hide(settingsScreen); show(inboxApp);
+    });
+    $('settingsForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const name = $('settingName').value.trim();
+      const phone = $('settingPhone').value.trim();
+      const newPwd = $('settingPassword').value;
+      const status = $('settingsStatus');
+      const username = getCurrent();
+      if(!username){ status.style.color='var(--danger)'; status.textContent='Kein eingeloggter Benutzer.'; return; }
+      const users = loadUsers();
+      const u = users[username] || {};
+      u.name = name || u.name;
+      u.phone = phone || u.phone;
+      if(newPwd){
+        u.pwdHash = await hashPassword(newPwd);
+      }
+      users[username] = u;
+      saveUsers(users);
+      status.style.color='var(--success)';
+      status.textContent='Einstellungen gespeichert.';
+      // reflect phone display
+      $('userPhoneDisplay').textContent = phone ? "Tel: " + phone : '';
+      setTimeout(()=>{ hide(settingsScreen); show(inboxApp); status.textContent=''; },700);
+    });
+
+    // Logout
+    $('logoutBtn').addEventListener('click', ()=>{ logout(); });
+
+    // Refresh/clear inbox (demo)
+    $('refreshBtn').addEventListener('click', ()=>{ renderEmailList(getCurrent()); });
+    $('clearInboxBtn').addEventListener('click', ()=>{ const box=$('emailListBox'); box.innerHTML='<p style="text-align:center;color:#666;margin-top:50px">Dein Postfach ist leer.</p>'; });
+
+    // Initialize: if current user exists, go to inbox
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const current = getCurrent();
+      if(current){
+        // check user still exists
+        const users = loadUsers();
+        if(users[current]) enterInbox(current);
+      }
+    });
+
+    // Keyboard: Escape to close compose/settings and return to inbox
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape'){
+        if(!composeScreen.classList.contains('hidden')){
+          hide(composeScreen); show(inboxApp);
+        } else if(!settingsScreen.classList.contains('hidden')){
+          hide(settingsScreen); show(inboxApp);
+        }
+      }
+    });
+
+    // Basic accessibility: prevent accidental form submission via Enter on some controls
+    // Not necessary here because we use proper <form> handling, but keep consistent behaviour.
+  </script>
+</body>
+</html>
