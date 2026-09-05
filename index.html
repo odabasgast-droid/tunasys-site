@@ -491,5 +491,103 @@
     // Basic accessibility: prevent accidental form submission via Enter on some controls
     // Not necessary here because we use proper <form> handling, but keep consistent behaviour.
   </script>
+
+  <!-- Firebase Auth integration (activates if you add firebase-config.js based on firebase-config.example.js) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script>
+    (function(){
+      // Only initialize if firebaseConfig is present (you must copy firebase-config.example.js -> firebase-config.js and fill values)
+      if(!window.firebaseConfig){
+        console.info('Firebase config not found. To enable real sign-up/sign-in, create firebase-config.js from firebase-config.example.js with your Firebase web config.');
+        return;
+      }
+
+      try{
+        firebase.initializeApp(window.firebaseConfig);
+        const auth = firebase.auth();
+
+        // Helper: show status messages in the UI
+        function setStatus(elId, msg, isError){
+          const el = document.getElementById(elId);
+          if(!el) return;
+          el.style.color = isError ? 'var(--danger)' : 'var(--success)';
+          el.textContent = msg;
+        }
+
+        // Use capture phase to intercept the submit before the demo localStorage handlers
+        const registerForm = document.getElementById('registerForm');
+        const loginForm = document.getElementById('loginForm');
+
+        if(registerForm){
+          registerForm.addEventListener('submit', async function(e){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const name = document.getElementById('regName').value.trim();
+            const username = document.getElementById('regUsername').value.trim().toLowerCase();
+            const pwd = document.getElementById('regPassword').value;
+            const statusId = 'registerStatus';
+            if(!username || !pwd || !name){ setStatus(statusId,'Bitte alle Felder ausfüllen.', true); return; }
+            const email = username + '@tunasys.de';
+            setStatus(statusId, 'Erstelle Konto...', false);
+            try{
+              const userCred = await auth.createUserWithEmailAndPassword(email, pwd);
+              await userCred.user.updateProfile({ displayName: name });
+              await userCred.user.sendEmailVerification();
+              setStatus(statusId, 'Konto erstellt. Verifizierungs-E-Mail gesendet. Bitte prüfe deine E-Mails.', false);
+              // Do not auto-login until verified; keep demo local storage untouched
+            }catch(err){
+              console.error(err);
+              setStatus(statusId, err.message || 'Fehler beim Erstellen des Kontos.', true);
+            }
+          }, true);
+        }
+
+        if(loginForm){
+          loginForm.addEventListener('submit', async function(e){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const username = document.getElementById('logUsername').value.trim().toLowerCase();
+            const pwd = document.getElementById('logPassword').value;
+            const statusId = 'loginStatus';
+            if(!username || !pwd){ setStatus(statusId,'Bitte Felder ausfüllen.', true); return; }
+            const email = username + '@tunasys.de';
+            setStatus(statusId, 'Anmeldung läuft...', false);
+            try{
+              const userCred = await auth.signInWithEmailAndPassword(email, pwd);
+              if(!userCred.user.emailVerified){
+                await userCred.user.sendEmailVerification();
+                await auth.signOut();
+                setStatus(statusId, 'E-Mail nicht verifiziert. Eine Verifizierungs-E-Mail wurde erneut gesendet.', true);
+                return;
+              }
+              setStatus(statusId, 'Erfolgreich angemeldet. Leite weiter...', false);
+              // Use the existing enterInbox function to show inbox UI
+              const usernameOnly = username.split('@')[0];
+              setTimeout(()=>{ if(typeof enterInbox === 'function') enterInbox(usernameOnly); }, 300);
+            }catch(err){
+              console.error(err);
+              setStatus(statusId, err.message || 'Fehler beim Anmelden.', true);
+            }
+          }, true);
+        }
+
+        // Expose a simple function to request password reset
+        window.tunasysSendPasswordReset = async function(username){
+          const email = (username.includes('@')) ? username : (username + '@tunasys.de');
+          try{
+            await auth.sendPasswordResetEmail(email);
+            return { ok:true };
+          }catch(err){
+            return { ok:false, error: err.message };
+          }
+        };
+
+        console.info('Firebase Auth integration active (placeholder config present).');
+      }catch(e){
+        console.error('Firebase init error', e);
+      }
+    })();
+  </script>
 </body>
 </html>
